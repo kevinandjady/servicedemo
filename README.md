@@ -1,16 +1,23 @@
-```
-go build -o myservice.exe ./main/main.go
+# GoLang Windows Server Demo
+
+## 构建
+
+```batch
+# windows
+if (!(Test-Path "build")) { mkdir build }; Remove-Item "build/servicedemo.exe" -ErrorAction SilentlyContinue; go build -o build/servicedemo.exe main/main.go
 ```
 
-```
+# 使用
+
+```batch
 #  - 安装服务
-./myservice.exe install
+build/servicedemo install
 # - 卸载服务
-./myservice.exe uninstall
+build/servicedemo uninstall
 # - 启动服务
-./myservice.exe start
+build/servicedemo start
 # - 停止服务
-./myservice.exe stop
+build/servicedemo stop
 # - 重启服务
-./myservice.exe restart
+build/servicedemo restart
 ```
