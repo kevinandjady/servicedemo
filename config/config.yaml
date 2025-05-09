@@ -1,0 +1,13 @@
+logger:
+  Path: "/var/log/chogori"
+  File: "chogori-agent-{Y-m-d}.log"
+  Level: info
+  RotateSize: "100MB"
+  RotateBackupLimit: 5
+  RotateBackupExpire: 7
+  RotateBackupCompress: 5
+  RotateCheckInterval: "24h"
+  logger_windows:
+    path:    "C:\\temp\\chogori\\logs"
+    level:   all
+    stdout:  true
