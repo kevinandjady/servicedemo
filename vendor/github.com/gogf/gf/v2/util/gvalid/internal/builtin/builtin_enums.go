@@ -47,9 +47,8 @@ func (r RuleEnums) Run(in RunInput) error {
 	var (
 		pkgPath  = in.ValueType.PkgPath()
 		typeName = in.ValueType.Name()
-		typeKind = in.ValueType.Kind()
 	)
-	if typeKind == reflect.Slice || typeKind == reflect.Ptr {
+	if in.ValueType.Kind() == reflect.Slice {
 		pkgPath = in.ValueType.Elem().PkgPath()
 		typeName = in.ValueType.Elem().Name()
 	}

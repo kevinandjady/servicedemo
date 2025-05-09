@@ -15,6 +15,12 @@ import (
 	"github.com/gogf/gf/v2/errors/gcode"
 )
 
+// IIs is the interface for Is feature.
+type IIs interface {
+	Error() string
+	Is(target error) bool
+}
+
 // IEqual is the interface for Equal feature.
 type IEqual interface {
 	Error() string

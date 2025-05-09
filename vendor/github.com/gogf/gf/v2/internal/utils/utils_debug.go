@@ -15,8 +15,10 @@ const (
 	commandEnvKeyForDebugKey = "gf.debug"
 )
 
-// isDebugEnabled marks whether GoFrame debug mode is enabled.
-var isDebugEnabled = false
+var (
+	// isDebugEnabled marks whether GoFrame debug mode is enabled.
+	isDebugEnabled = false
+)
 
 func init() {
 	// Debugging configured.

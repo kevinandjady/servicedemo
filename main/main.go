@@ -18,8 +18,8 @@ var Main = &gcmd.Command{
 	Name:  "chogori-agent",
 	Brief: "chogori-agent",
 	Arguments: []gcmd.Argument{
-		{Name: "kubeconfig", Brief: "kubernetes config file, parse containerId from v1.Pod"},
-		{Name: "controller", Brief: "controller config file"},
+		{Name: "kubeconfig", Brief: "kubernetes config file"},
+		{Name: "controller", Brief: "controller ip:host"},
 		{Name: "config", Brief: "configuration file"},
 	},
 	Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {

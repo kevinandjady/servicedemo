@@ -43,7 +43,9 @@ func NewStrStrMapFrom(data map[string]string, safe ...bool) *StrStrMap {
 // Iterator iterates the hash map readonly with custom callback function `f`.
 // If `f` returns true, then it continues iterating; or false to stop.
 func (m *StrStrMap) Iterator(f func(k string, v string) bool) {
-	for k, v := range m.Map() {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for k, v := range m.data {
 		if !f(k, v) {
 			break
 		}

@@ -7,6 +7,7 @@
 package gconv
 
 import (
+	"database/sql"
 	"reflect"
 
 	"github.com/gogf/gf/v2/errors/gcode"
@@ -93,9 +94,7 @@ import (
 // given `relation` parameter.
 //
 // See the example or unit testing cases for clear understanding for this function.
-func ScanList(
-	structSlice any, structSlicePointer any, bindToAttrName string, relationAttrNameAndFields ...string,
-) (err error) {
+func ScanList(structSlice interface{}, structSlicePointer interface{}, bindToAttrName string, relationAttrNameAndFields ...string) (err error) {
 	var (
 		relationAttrName string
 		relationFields   string
@@ -113,13 +112,12 @@ func ScanList(
 // doScanList converts `structSlice` to struct slice which contains other complex struct attributes recursively.
 // Note that the parameter `structSlicePointer` should be type of *[]struct/*[]*struct.
 func doScanList(
-	structSlice any, structSlicePointer any, bindToAttrName, relationAttrName, relationFields string,
+	structSlice interface{}, structSlicePointer interface{}, bindToAttrName, relationAttrName, relationFields string,
 ) (err error) {
 	var (
-		maps    = Maps(structSlice)
-		lenMaps = len(maps)
+		maps = Maps(structSlice)
 	)
-	if lenMaps == 0 {
+	if len(maps) == 0 {
 		return nil
 	}
 	// Necessary checks for parameters.
@@ -155,6 +153,19 @@ func doScanList(
 			reflectKind,
 		)
 	}
+	length := len(maps)
+	if length == 0 {
+		// The pointed slice is not empty.
+		if reflectValue.Len() > 0 {
+			// It here checks if it has struct item, which is already initialized.
+			// It then returns error to warn the developer its empty and no conversion.
+			if v := reflectValue.Index(0); v.Kind() != reflect.Ptr {
+				return sql.ErrNoRows
+			}
+		}
+		// Do nothing for empty struct slice.
+		return nil
+	}
 	var (
 		arrayValue    reflect.Value // Like: []*Entity
 		arrayItemType reflect.Type  // Like: *Entity
@@ -163,7 +174,7 @@ func doScanList(
 	if reflectValue.Len() > 0 {
 		arrayValue = reflectValue
 	} else {
-		arrayValue = reflect.MakeSlice(reflectType.Elem(), lenMaps, lenMaps)
+		arrayValue = reflect.MakeSlice(reflectType.Elem(), length, length)
 	}
 
 	// Slice element item.
@@ -171,7 +182,7 @@ func doScanList(
 
 	// Relation variables.
 	var (
-		relationDataMap         map[string]any
+		relationDataMap         map[string]interface{}
 		relationFromFieldName   string // Eg: relationKV: id:uid  -> id
 		relationBindToFieldName string // Eg: relationKV: id:uid  -> uid
 	)
@@ -317,7 +328,7 @@ func doScanList(
 				relationFromAttrField = relationFromAttrValue.FieldByName(relationBindToFieldName)
 				if relationFromAttrField.IsValid() {
 					// results := make(Result, 0)
-					results := make([]any, 0)
+					results := make([]interface{}, 0)
 					for _, v := range SliceAny(relationDataMap[String(relationFromAttrField.Interface())]) {
 						item := v
 						results = append(results, item)

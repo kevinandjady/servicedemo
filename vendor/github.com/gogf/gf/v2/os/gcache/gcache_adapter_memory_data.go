@@ -14,20 +14,14 @@ import (
 	"github.com/gogf/gf/v2/os/gtime"
 )
 
-type memoryData struct {
-	mu   sync.RWMutex                   // dataMu ensures the concurrent safety of underlying data map.
-	data map[interface{}]memoryDataItem // data is the underlying cache data which is stored in a hash table.
+type adapterMemoryData struct {
+	mu   sync.RWMutex                      // dataMu ensures the concurrent safety of underlying data map.
+	data map[interface{}]adapterMemoryItem // data is the underlying cache data which is stored in a hash table.
 }
 
-// memoryDataItem holds the internal cache item data.
-type memoryDataItem struct {
-	v interface{} // Value.
-	e int64       // Expire timestamp in milliseconds.
-}
-
-func newMemoryData() *memoryData {
-	return &memoryData{
-		data: make(map[interface{}]memoryDataItem),
+func newAdapterMemoryData() *adapterMemoryData {
+	return &adapterMemoryData{
+		data: make(map[interface{}]adapterMemoryItem),
 	}
 }
 
@@ -36,11 +30,11 @@ func newMemoryData() *memoryData {
 //
 // It deletes the `key` if given `value` is nil.
 // It does nothing if `key` does not exist in the cache.
-func (d *memoryData) Update(key interface{}, value interface{}) (oldValue interface{}, exist bool, err error) {
+func (d *adapterMemoryData) Update(key interface{}, value interface{}) (oldValue interface{}, exist bool, err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if item, ok := d.data[key]; ok {
-		d.data[key] = memoryDataItem{
+		d.data[key] = adapterMemoryItem{
 			v: value,
 			e: item.e,
 		}
@@ -53,11 +47,11 @@ func (d *memoryData) Update(key interface{}, value interface{}) (oldValue interf
 //
 // It returns -1 and does nothing if the `key` does not exist in the cache.
 // It deletes the `key` if `duration` < 0.
-func (d *memoryData) UpdateExpire(key interface{}, expireTime int64) (oldDuration time.Duration, err error) {
+func (d *adapterMemoryData) UpdateExpire(key interface{}, expireTime int64) (oldDuration time.Duration, err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if item, ok := d.data[key]; ok {
-		d.data[key] = memoryDataItem{
+		d.data[key] = adapterMemoryItem{
 			v: item.v,
 			e: expireTime,
 		}
@@ -68,7 +62,7 @@ func (d *memoryData) UpdateExpire(key interface{}, expireTime int64) (oldDuratio
 
 // Remove deletes the one or more keys from cache, and returns its value.
 // If multiple keys are given, it returns the value of the deleted last item.
-func (d *memoryData) Remove(keys ...interface{}) (removedKeys []interface{}, value interface{}, err error) {
+func (d *adapterMemoryData) Remove(keys ...interface{}) (removedKeys []interface{}, value interface{}, err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	removedKeys = make([]interface{}, 0)
@@ -84,82 +78,77 @@ func (d *memoryData) Remove(keys ...interface{}) (removedKeys []interface{}, val
 }
 
 // Data returns a copy of all key-value pairs in the cache as map type.
-func (d *memoryData) Data() (map[interface{}]interface{}, error) {
+func (d *adapterMemoryData) Data() (map[interface{}]interface{}, error) {
 	d.mu.RLock()
-	defer d.mu.RUnlock()
-	var (
-		data     = make(map[interface{}]interface{}, len(d.data))
-		nowMilli = gtime.TimestampMilli()
-	)
+	m := make(map[interface{}]interface{}, len(d.data))
 	for k, v := range d.data {
-		if v.e > nowMilli {
-			data[k] = v.v
+		if !v.IsExpired() {
+			m[k] = v.v
 		}
 	}
-	return data, nil
+	d.mu.RUnlock()
+	return m, nil
 }
 
 // Keys returns all keys in the cache as slice.
-func (d *memoryData) Keys() ([]interface{}, error) {
+func (d *adapterMemoryData) Keys() ([]interface{}, error) {
 	d.mu.RLock()
-	defer d.mu.RUnlock()
 	var (
-		keys     = make([]interface{}, 0, len(d.data))
-		nowMilli = gtime.TimestampMilli()
+		index = 0
+		keys  = make([]interface{}, len(d.data))
 	)
 	for k, v := range d.data {
-		if v.e > nowMilli {
-			keys = append(keys, k)
+		if !v.IsExpired() {
+			keys[index] = k
+			index++
 		}
 	}
+	d.mu.RUnlock()
 	return keys, nil
 }
 
 // Values returns all values in the cache as slice.
-func (d *memoryData) Values() ([]interface{}, error) {
+func (d *adapterMemoryData) Values() ([]interface{}, error) {
 	d.mu.RLock()
-	defer d.mu.RUnlock()
 	var (
-		values   = make([]interface{}, 0, len(d.data))
-		nowMilli = gtime.TimestampMilli()
+		index  = 0
+		values = make([]interface{}, len(d.data))
 	)
 	for _, v := range d.data {
-		if v.e > nowMilli {
-			values = append(values, v.v)
+		if !v.IsExpired() {
+			values[index] = v.v
+			index++
 		}
 	}
+	d.mu.RUnlock()
 	return values, nil
 }
 
-// Size returns the size of the cache that not expired.
-func (d *memoryData) Size() (size int, err error) {
+// Size returns the size of the cache.
+func (d *adapterMemoryData) Size() (size int, err error) {
 	d.mu.RLock()
-	defer d.mu.RUnlock()
-	var nowMilli = gtime.TimestampMilli()
-	for _, v := range d.data {
-		if v.e > nowMilli {
-			size++
-		}
-	}
+	size = len(d.data)
+	d.mu.RUnlock()
 	return size, nil
 }
 
 // Clear clears all data of the cache.
 // Note that this function is sensitive and should be carefully used.
-func (d *memoryData) Clear() {
+func (d *adapterMemoryData) Clear() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	d.data = make(map[interface{}]memoryDataItem)
+	d.data = make(map[interface{}]adapterMemoryItem)
+	return nil
 }
 
-func (d *memoryData) Get(key interface{}) (item memoryDataItem, ok bool) {
+func (d *adapterMemoryData) Get(key interface{}) (item adapterMemoryItem, ok bool) {
 	d.mu.RLock()
 	item, ok = d.data[key]
 	d.mu.RUnlock()
 	return
 }
 
-func (d *memoryData) Set(key interface{}, value memoryDataItem) {
+func (d *adapterMemoryData) Set(key interface{}, value adapterMemoryItem) {
 	d.mu.Lock()
 	d.data[key] = value
 	d.mu.Unlock()
@@ -169,10 +158,10 @@ func (d *memoryData) Set(key interface{}, value memoryDataItem) {
 //
 // It does not expire if `duration` == 0.
 // It deletes the keys of `data` if `duration` < 0 or given `value` is nil.
-func (d *memoryData) SetMap(data map[interface{}]interface{}, expireTime int64) error {
+func (d *adapterMemoryData) SetMap(data map[interface{}]interface{}, expireTime int64) error {
 	d.mu.Lock()
 	for k, v := range data {
-		d.data[k] = memoryDataItem{
+		d.data[k] = adapterMemoryItem{
 			v: v,
 			e: expireTime,
 		}
@@ -181,7 +170,7 @@ func (d *memoryData) SetMap(data map[interface{}]interface{}, expireTime int64) 
 	return nil
 }
 
-func (d *memoryData) SetWithLock(ctx context.Context, key interface{}, value interface{}, expireTimestamp int64) (interface{}, error) {
+func (d *adapterMemoryData) SetWithLock(ctx context.Context, key interface{}, value interface{}, expireTimestamp int64) (interface{}, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	var (
@@ -203,12 +192,15 @@ func (d *memoryData) SetWithLock(ctx context.Context, key interface{}, value int
 			return nil, nil
 		}
 	}
-	d.data[key] = memoryDataItem{v: value, e: expireTimestamp}
+	d.data[key] = adapterMemoryItem{v: value, e: expireTimestamp}
 	return value, nil
 }
 
-func (d *memoryData) Delete(key interface{}) {
+func (d *adapterMemoryData) DeleteWithDoubleCheck(key interface{}, force ...bool) {
 	d.mu.Lock()
-	defer d.mu.Unlock()
-	delete(d.data, key)
+	// Doubly check before really deleting it from cache.
+	if item, ok := d.data[key]; (ok && item.IsExpired()) || (len(force) > 0 && force[0]) {
+		delete(d.data, key)
+	}
+	d.mu.Unlock()
 }

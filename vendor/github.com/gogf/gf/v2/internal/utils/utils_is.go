@@ -85,11 +85,11 @@ func IsMap(value interface{}) bool {
 
 // IsStruct checks whether `value` is type of struct.
 func IsStruct(value interface{}) bool {
-	reflectType := reflect.TypeOf(value)
+	var reflectType = reflect.TypeOf(value)
 	if reflectType == nil {
 		return false
 	}
-	reflectKind := reflectType.Kind()
+	var reflectKind = reflectType.Kind()
 	for reflectKind == reflect.Ptr {
 		reflectType = reflectType.Elem()
 		reflectKind = reflectType.Kind()

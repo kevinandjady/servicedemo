@@ -47,7 +47,9 @@ func NewStrAnyMapFrom(data map[string]interface{}, safe ...bool) *StrAnyMap {
 // Iterator iterates the hash map readonly with custom callback function `f`.
 // If `f` returns true, then it continues iterating; or false to stop.
 func (m *StrAnyMap) Iterator(f func(k string, v interface{}) bool) {
-	for k, v := range m.Map() {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for k, v := range m.data {
 		if !f(k, v) {
 			break
 		}

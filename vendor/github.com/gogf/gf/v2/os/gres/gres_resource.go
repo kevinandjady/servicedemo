@@ -20,7 +20,6 @@ import (
 	"github.com/gogf/gf/v2/text/gstr"
 )
 
-// Resource is the resource manager for the file system.
 type Resource struct {
 	tree *gtree.BTree
 }

@@ -42,21 +42,21 @@ func MapDelete(data map[string]interface{}, keys ...string) {
 }
 
 // MapMerge merges all map from `src` to map `dst`.
-func MapMerge(dstMap map[string]interface{}, srcMaps ...map[string]interface{}) {
-	if dstMap == nil {
+func MapMerge(dst map[string]interface{}, src ...map[string]interface{}) {
+	if dst == nil {
 		return
 	}
-	for _, m := range srcMaps {
+	for _, m := range src {
 		for k, v := range m {
-			dstMap[k] = v
+			dst[k] = v
 		}
 	}
 }
 
 // MapMergeCopy creates and returns a new map which merges all map from `src`.
-func MapMergeCopy(maps ...map[string]interface{}) (copy map[string]interface{}) {
+func MapMergeCopy(src ...map[string]interface{}) (copy map[string]interface{}) {
 	copy = make(map[string]interface{})
-	for _, m := range maps {
+	for _, m := range src {
 		for k, v := range m {
 			copy[k] = v
 		}

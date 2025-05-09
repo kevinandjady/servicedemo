@@ -207,7 +207,7 @@ func (j *Json) ToProperties() ([]byte, error) {
 	return gproperties.Encode(j.Map())
 }
 
-// ToPropertiesString properties to string
+// TopropertiesString properties to string
 func (j *Json) ToPropertiesString() (string, error) {
 	b, e := j.ToProperties()
 	return string(b), e
@@ -221,7 +221,7 @@ func (j *Json) MustToProperties() []byte {
 	return result
 }
 
-// MustToPropertiesString
+// MustTopropertiesString
 func (j *Json) MustToPropertiesString() string {
 	return string(j.MustToProperties())
 }

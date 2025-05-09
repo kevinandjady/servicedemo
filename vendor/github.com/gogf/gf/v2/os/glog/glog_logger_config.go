@@ -59,7 +59,7 @@ func DefaultConfig() Config {
 	c := Config{
 		File:                defaultFileFormat,
 		Flags:               F_TIME_STD,
-		TimeFormat:          defaultTimeFormat,
+		TimeFormat:          "",
 		Level:               LEVEL_ALL,
 		CtxKeys:             []interface{}{},
 		StStatus:            1,

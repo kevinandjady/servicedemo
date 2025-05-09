@@ -62,10 +62,7 @@ func doZipPathWriter(srcPath string, zipWriter *zip.Writer, option ...Option) er
 	} else {
 		files = []string{absolutePath}
 	}
-	headerPrefix := usedOption.Prefix
-	if !(headerPrefix == "/") {
-		headerPrefix = strings.TrimRight(headerPrefix, `\/`)
-	}
+	headerPrefix := strings.TrimRight(usedOption.Prefix, `\/`)
 	if headerPrefix != "" && gfile.IsDir(absolutePath) {
 		headerPrefix += "/"
 	}

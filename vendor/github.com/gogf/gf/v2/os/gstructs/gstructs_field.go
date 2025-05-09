@@ -50,7 +50,9 @@ func (f *Field) TagStr() string {
 
 // TagMap returns all the tag of the field along with its value string as map.
 func (f *Field) TagMap() map[string]string {
-	data := ParseTag(f.TagStr())
+	var (
+		data = ParseTag(f.TagStr())
+	)
 	for k, v := range data {
 		data[k] = utils.StripSlashes(gtag.Parse(v))
 	}

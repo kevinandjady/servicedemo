@@ -21,7 +21,7 @@ type AdapterRedis struct {
 }
 
 // NewAdapterRedis creates and returns a new memory cache object.
-func NewAdapterRedis(redis *gredis.Redis) *AdapterRedis {
+func NewAdapterRedis(redis *gredis.Redis) Adapter {
 	return &AdapterRedis{
 		redis: redis,
 	}

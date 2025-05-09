@@ -28,8 +28,10 @@ const (
 	stackFilterKeyLocal = "/errors/gerror/gerror"
 )
 
-// goRootForFilter is used for stack filtering in development environment purpose.
-var goRootForFilter = runtime.GOROOT()
+var (
+	// goRootForFilter is used for stack filtering in development environment purpose.
+	goRootForFilter = runtime.GOROOT()
+)
 
 func init() {
 	if goRootForFilter != "" {
@@ -122,4 +124,23 @@ func (err *Error) Equal(target error) bool {
 		return false
 	}
 	return true
+}
+
+// Is reports whether current error `err` has error `target` in its chaining errors.
+// It is just for implements for stdlib errors.Is from Go version 1.17.
+func (err *Error) Is(target error) bool {
+	if Equal(err, target) {
+		return true
+	}
+	nextErr := err.Unwrap()
+	if nextErr == nil {
+		return false
+	}
+	if Equal(nextErr, target) {
+		return true
+	}
+	if e, ok := nextErr.(IIs); ok {
+		return e.Is(target)
+	}
+	return false
 }

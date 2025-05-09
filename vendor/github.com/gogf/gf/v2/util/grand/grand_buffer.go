@@ -18,15 +18,17 @@ const (
 	bufferChanSize = 10000
 )
 
-// bufferChan is the buffer for random bytes,
-// every item storing 4 bytes.
-var bufferChan = make(chan []byte, bufferChanSize)
+var (
+	// bufferChan is the buffer for random bytes,
+	// every item storing 4 bytes.
+	bufferChan = make(chan []byte, bufferChanSize)
+)
 
 func init() {
 	go asyncProducingRandomBufferBytesLoop()
 }
 
-// asyncProducingRandomBufferBytesLoop is a named goroutine, which uses an asynchronous goroutine
+// asyncProducingRandomBufferBytes is a named goroutine, which uses an asynchronous goroutine
 // to produce the random bytes, and a buffer chan to store the random bytes.
 // So it has high performance to generate random numbers.
 func asyncProducingRandomBufferBytesLoop() {

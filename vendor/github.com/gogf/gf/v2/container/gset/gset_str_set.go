@@ -17,7 +17,6 @@ import (
 	"github.com/gogf/gf/v2/util/gconv"
 )
 
-// StrSet is consisted of string items.
 type StrSet struct {
 	mu   rwmutex.RWMutex
 	data map[string]struct{}
@@ -48,7 +47,9 @@ func NewStrSetFrom(items []string, safe ...bool) *StrSet {
 // Iterator iterates the set readonly with given callback function `f`,
 // if `f` returns true then continue iterating; or false to stop.
 func (set *StrSet) Iterator(f func(v string) bool) {
-	for _, k := range set.Slice() {
+	set.mu.RLock()
+	defer set.mu.RUnlock()
+	for k := range set.data {
 		if !f(k) {
 			break
 		}

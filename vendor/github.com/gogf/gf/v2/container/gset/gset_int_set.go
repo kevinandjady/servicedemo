@@ -15,7 +15,6 @@ import (
 	"github.com/gogf/gf/v2/util/gconv"
 )
 
-// IntSet is consisted of int items.
 type IntSet struct {
 	mu   rwmutex.RWMutex
 	data map[int]struct{}
@@ -46,7 +45,9 @@ func NewIntSetFrom(items []int, safe ...bool) *IntSet {
 // Iterator iterates the set readonly with given callback function `f`,
 // if `f` returns true then continue iterating; or false to stop.
 func (set *IntSet) Iterator(f func(v int) bool) {
-	for _, k := range set.Slice() {
+	set.mu.RLock()
+	defer set.mu.RUnlock()
+	for k := range set.data {
 		if !f(k) {
 			break
 		}

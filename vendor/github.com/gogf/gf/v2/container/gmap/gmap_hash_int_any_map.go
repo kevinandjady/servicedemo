@@ -8,14 +8,13 @@
 package gmap
 
 import (
-	"reflect"
-
 	"github.com/gogf/gf/v2/container/gvar"
 	"github.com/gogf/gf/v2/internal/deepcopy"
 	"github.com/gogf/gf/v2/internal/empty"
 	"github.com/gogf/gf/v2/internal/json"
 	"github.com/gogf/gf/v2/internal/rwmutex"
 	"github.com/gogf/gf/v2/util/gconv"
+	"reflect"
 )
 
 // IntAnyMap implements map[int]interface{} with RWMutex that has switch.
@@ -47,7 +46,9 @@ func NewIntAnyMapFrom(data map[int]interface{}, safe ...bool) *IntAnyMap {
 // Iterator iterates the hash map readonly with custom callback function `f`.
 // If `f` returns true, then it continues iterating; or false to stop.
 func (m *IntAnyMap) Iterator(f func(k int, v interface{}) bool) {
-	for k, v := range m.Map() {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for k, v := range m.data {
 		if !f(k, v) {
 			break
 		}

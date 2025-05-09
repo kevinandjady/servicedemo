@@ -8,9 +8,9 @@ package gtimer
 
 import (
 	"context"
+	"github.com/gogf/gf/v2/errors/gcode"
 
 	"github.com/gogf/gf/v2/container/gtype"
-	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
 )
 
@@ -45,29 +45,26 @@ func (entry *Entry) Run() {
 			return
 		}
 	}
-	go entry.callJobFunc()
-}
-
-// callJobFunc executes the job function in entry.
-func (entry *Entry) callJobFunc() {
-	defer func() {
-		if exception := recover(); exception != nil {
-			if exception != panicExit {
-				if v, ok := exception.(error); ok && gerror.HasStack(v) {
-					panic(v)
+	go func() {
+		defer func() {
+			if exception := recover(); exception != nil {
+				if exception != panicExit {
+					if v, ok := exception.(error); ok && gerror.HasStack(v) {
+						panic(v)
+					} else {
+						panic(gerror.NewCodef(gcode.CodeInternalPanic, "exception recovered: %+v", exception))
+					}
 				} else {
-					panic(gerror.NewCodef(gcode.CodeInternalPanic, "exception recovered: %+v", exception))
+					entry.Close()
+					return
 				}
-			} else {
-				entry.Close()
-				return
 			}
-		}
-		if entry.Status() == StatusRunning {
-			entry.SetStatus(StatusReady)
-		}
+			if entry.Status() == StatusRunning {
+				entry.SetStatus(StatusReady)
+			}
+		}()
+		entry.job(entry.ctx)
 	}()
-	entry.job(entry.ctx)
 }
 
 // doCheckAndRunByTicks checks the if job can run in given timer ticks,

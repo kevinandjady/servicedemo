@@ -6,51 +6,28 @@
 
 package gconv
 
-import (
-	"github.com/gogf/gf/v2/internal/json"
-	"github.com/gogf/gf/v2/util/gconv/internal/converter"
-)
+import "github.com/gogf/gf/v2/internal/json"
 
 // SliceMap is alias of Maps.
-func SliceMap(any any, option ...MapOption) []map[string]any {
+func SliceMap(any interface{}, option ...MapOption) []map[string]interface{} {
 	return Maps(any, option...)
 }
 
 // SliceMapDeep is alias of MapsDeep.
 // Deprecated: used SliceMap instead.
-func SliceMapDeep(any any) []map[string]any {
+func SliceMapDeep(any interface{}) []map[string]interface{} {
 	return MapsDeep(any)
 }
 
-// Maps converts `value` to []map[string]any.
+// Maps converts `value` to []map[string]interface{}.
 // Note that it automatically checks and converts json string to []map if `value` is string/[]byte.
-func Maps(value any, option ...MapOption) []map[string]any {
-	mapOption := MapOption{
-		ContinueOnError: true,
-	}
-	if len(option) > 0 {
-		mapOption = option[0]
-	}
-	result, _ := defaultConverter.SliceMap(value, SliceMapOption{
-		MapOption: mapOption,
-		SliceOption: converter.SliceOption{
-			ContinueOnError: true,
-		},
-	})
-	return result
-}
-
-// MapsDeep converts `value` to []map[string]any recursively.
-//
-// TODO completely implement the recursive converting for all types.
-// Deprecated: used Maps instead.
-func MapsDeep(value any, tags ...string) []map[string]any {
+func Maps(value interface{}, option ...MapOption) []map[string]interface{} {
 	if value == nil {
 		return nil
 	}
 	switch r := value.(type) {
 	case string:
-		list := make([]map[string]any, 0)
+		list := make([]map[string]interface{}, 0)
 		if len(r) > 0 && r[0] == '[' && r[len(r)-1] == ']' {
 			if err := json.UnmarshalUseNumber([]byte(r), &list); err != nil {
 				return nil
@@ -61,7 +38,7 @@ func MapsDeep(value any, tags ...string) []map[string]any {
 		}
 
 	case []byte:
-		list := make([]map[string]any, 0)
+		list := make([]map[string]interface{}, 0)
 		if len(r) > 0 && r[0] == '[' && r[len(r)-1] == ']' {
 			if err := json.UnmarshalUseNumber(r, &list); err != nil {
 				return nil
@@ -71,8 +48,55 @@ func MapsDeep(value any, tags ...string) []map[string]any {
 			return nil
 		}
 
-	case []map[string]any:
-		list := make([]map[string]any, len(r))
+	case []map[string]interface{}:
+		return r
+
+	default:
+		array := Interfaces(value)
+		if len(array) == 0 {
+			return nil
+		}
+		list := make([]map[string]interface{}, len(array))
+		for k, v := range array {
+			list[k] = Map(v, option...)
+		}
+		return list
+	}
+}
+
+// MapsDeep converts `value` to []map[string]interface{} recursively.
+//
+// TODO completely implement the recursive converting for all types.
+// Deprecated: used Maps instead.
+func MapsDeep(value interface{}, tags ...string) []map[string]interface{} {
+	if value == nil {
+		return nil
+	}
+	switch r := value.(type) {
+	case string:
+		list := make([]map[string]interface{}, 0)
+		if len(r) > 0 && r[0] == '[' && r[len(r)-1] == ']' {
+			if err := json.UnmarshalUseNumber([]byte(r), &list); err != nil {
+				return nil
+			}
+			return list
+		} else {
+			return nil
+		}
+
+	case []byte:
+		list := make([]map[string]interface{}, 0)
+		if len(r) > 0 && r[0] == '[' && r[len(r)-1] == ']' {
+			if err := json.UnmarshalUseNumber(r, &list); err != nil {
+				return nil
+			}
+			return list
+		} else {
+			return nil
+		}
+
+	case []map[string]interface{}:
+		list := make([]map[string]interface{}, len(r))
 		for k, v := range r {
 			list[k] = MapDeep(v, tags...)
 		}
@@ -83,7 +107,7 @@ func MapsDeep(value any, tags ...string) []map[string]any {
 		if len(array) == 0 {
 			return nil
 		}
-		list := make([]map[string]any, len(array))
+		list := make([]map[string]interface{}, len(array))
 		for k, v := range array {
 			list[k] = MapDeep(v, tags...)
 		}

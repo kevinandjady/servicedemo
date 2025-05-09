@@ -15,7 +15,6 @@ import (
 	"github.com/gogf/gf/v2/internal/json"
 )
 
-// File is a file in a zip file.
 type File struct {
 	file     *zip.File
 	reader   *bytes.Reader

@@ -24,11 +24,5 @@ func (t *Time) Value() (driver.Value, error) {
 	if t.IsZero() {
 		return nil, nil
 	}
-
-	if t.Year() == 0 {
-		// Only time.
-		return t.Format("15:04:05"), nil
-	}
-
 	return t.Time, nil
 }
