@@ -6,41 +6,57 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gcmd"
 	"github.com/gogf/gf/v2/os/gctx"
+	"github.com/gogf/gf/v2/os/glog"
 	"github.com/kardianos/service"
 )
+
+var logger service.Logger
 
 var Main = &gcmd.Command{
 	Name:  "chogori-agent",
 	Brief: "chogori-agent",
 	Arguments: []gcmd.Argument{
 		{Name: "kubeconfig", Brief: "kubernetes config file, parse containerId from v1.Pod"},
-		{Name: "controller", Brief: "chogori-controller for alloc/free GPU resources"},
-		{Name: "chogori-resource-prefix", Brief: "chogori device resource prefix"},
-		{Name: "chogori-resource-compat", Brief: "chogori device resource compat"},
-		{Name: "chogori-root", Brief: "chogori root directory"},
-		{Name: "config", Brief: "chogori configuration file"},
-		{Name: "version", Short: "v", Orphan: true, Brief: "show version"},
-		{Name: "sock", Brief: "path of chogori.sock (uds)"},
-		{Name: "listen", Brief: "listen address of chogori-agent (http)"},
-		{Name: "enable-dynamic-free", Brief: "dynamic free of device resources"},
-		{Name: "free-ticker", Brief: "check the interval for free app (second)"},
-		{Name: "heartbeat-timeout", Brief: "heartbeat timeout (second)"},
+		{Name: "controller", Brief: "controller config file"},
+		{Name: "config", Brief: "configuration file"},
 	},
 	Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
-		glog := g.Log("logger_windows")
 		if cfgFile := parser.GetOpt("kubeconfig"); cfgFile != nil {
-			logger.Infof("set config file: %s", cfgFile.String())
+			glog.Infof(ctx, "set kubeconfig file: %s", cfgFile.String())
+		}
+		if cfgFile := parser.GetOpt("controller"); cfgFile != nil {
+			glog.Infof(ctx, "set controller file: %s", cfgFile.String())
+		}
+		if cfgFile := parser.GetOpt("config"); cfgFile != nil {
 			glog.Infof(ctx, "set config file: %s", cfgFile.String())
 		}
-		glog.Infof(ctx, "121212")
+
 		return nil
 	},
 }
 
-var logger service.Logger
+// 创建符合Handler类型的函数
+func createServiceLoggerHandler(svcLogger service.Logger) glog.Handler {
+	return func(ctx context.Context, in *glog.HandlerInput) {
+		msg := strings.TrimSpace(in.String())
+
+		switch in.Level {
+		case glog.LEVEL_ERRO, glog.LEVEL_CRIT:
+			_ = svcLogger.Error(msg)
+		case glog.LEVEL_WARN:
+			_ = svcLogger.Warning(msg)
+		default:
+			_ = svcLogger.Info(msg)
+		}
+	}
+}
+
+func setupServiceLogger() {
+	handler := createServiceLoggerHandler(logger)
+	glog.SetHandlers(handler)
+}
 
 type program struct {
 	serviceArgs []string
@@ -53,6 +69,7 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) run() {
+	setupServiceLogger()
 	Main.Run(gctx.New())
 }
 
@@ -62,8 +79,8 @@ func (p *program) Stop(s service.Service) error {
 
 func main() {
 	svcConfig := &service.Config{
-		Name:        "AAAAAAAAAAAAA",
-		DisplayName: "AAAAAAAAAAAAA",
+		Name:        "Windows Service Demo AAAAAAAAA",
+		DisplayName: "Windows Service Demo AAAAAAAAA",
 		Description: "带参数的服务示例",
 	}
 
@@ -133,7 +150,6 @@ func main() {
 
 	// 参数
 	prg.serviceArgs = os.Args[1:]
-	//logger.Infof("os.Args完整内容: %v", os.Args)
 
 	// 创建服务
 	s, err := service.New(prg, svcConfig)
